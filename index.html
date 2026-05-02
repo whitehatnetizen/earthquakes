@@ -47,6 +47,12 @@
   .ts-event[data-mag-bucket="m85"] { background: #e1463c; }
   .ts-event[data-mag-bucket="m9"]  { background: #8b1818; }
   .ts-event:hover, .ts-event:focus { transform: translateX(-50%) scale(1.5); border-color: #fff; outline: none; z-index: 2; }
+  @keyframes ts-event-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(225, 70, 60, 0.85); transform: translateX(-50%) scale(1); }
+    50%  { box-shadow: 0 0 0 12px rgba(225, 70, 60, 0); transform: translateX(-50%) scale(1.7); }
+    100% { box-shadow: 0 0 0 0 rgba(225, 70, 60, 0); transform: translateX(-50%) scale(1); }
+  }
+  .ts-event.pulse { animation: ts-event-pulse 1.4s ease-out; z-index: 3; }
   .ts-years { position: relative; height: 18px; margin-top: 2px; }
   .ts-year { position: absolute; transform: translateX(-50%); top: 0; font-size: 10px; color: var(--fg-muted); font-variant-numeric: tabular-nums; line-height: 1; padding-top: 5px; }
   .ts-year::before { content: ''; position: absolute; top: 0; left: 50%; width: 1px; height: 4px; background: var(--fg-muted); opacity: 0.55; transform: translateX(-50%); }
@@ -4714,9 +4720,12 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
         dot.type = 'button';
         dot.dataset.magBucket = magBucket(ev.mag);
         dot.dataset.row = String(row);
+        dot.dataset.eventT = String(ev.t);
         dot.style.left = pct + '%';
         const col = magColor(ev.mag);
         if (col) dot.style.background = col;
+        // Allow the same animation class to be re-applied (caller controls pulses)
+        dot.addEventListener('animationend', () => dot.classList.remove('pulse'));
         const titleBits = [ev.label];
         if (ev.subtitle) titleBits.push(ev.subtitle);
         dot.title = titleBits.join(' — ');
@@ -5279,7 +5288,25 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
   }));
 
   const scrubberContainer = document.getElementById('scrubber');
-  const scrubber = GIS.scrubber.create({
+
+  // Pulse the matching timeline dot when the scrubber crosses a curated event
+  // during playback (does nothing when paused or manually scrubbed).
+  let lastCrossT = null;
+  function pulseDotsCrossedBetween(prev, next) {
+    if (prev == null || next <= prev) return;
+    for (const ev of scrubberEvents) {
+      if (prev < ev.t && ev.t <= next) {
+        const dot = document.querySelector('.ts-event[data-event-t="' + ev.t + '"]');
+        if (!dot) continue;
+        dot.classList.remove('pulse');
+        void dot.offsetWidth;        // restart animation
+        dot.classList.add('pulse');
+      }
+    }
+  }
+
+  let scrubber;     // declare first so closure-references during initial notify see `undefined`, not TDZ
+  scrubber = GIS.scrubber.create({
     container: document.getElementById('scrubber'),
     min: T_MIN,
     max: T_MAX,
@@ -5292,7 +5319,14 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
       { label: '1 year/s', value: 86400 * 365 },
       { label: '5 years/s', value: 86400 * 365 * 5 },
     ],
-    onChange: (t) => { currentT = t; refresh(); },
+    onChange: (t) => {
+      if (scrubber && scrubber.playing) {
+        pulseDotsCrossedBetween(lastCrossT, t);
+      }
+      lastCrossT = t;
+      currentT = t;
+      refresh();
+    },
     formatLabel: (t) => new Date(t * 1000).toISOString().slice(0, 10),
     events: scrubberEvents,
     yearTicks: true,
