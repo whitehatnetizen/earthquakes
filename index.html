@@ -84,21 +84,76 @@
   .source a { color: var(--accent); text-decoration: none; }
   .source a:hover { text-decoration: underline; }
   .maplibregl-control-container { display: none; }
+  .menu-btn { display: none; background: var(--bg-elev); border: 0; color: var(--fg); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 16px; line-height: 1; margin-left: auto; }
+
+  @media (max-width: 768px) {
+    body { font-size: 13px; }
+    header { padding: 8px 12px; gap: 8px; flex-wrap: nowrap; }
+    header h1 { font-size: 14px; }
+    header .sub { display: none; }
+    .menu-btn { display: inline-flex; }
+    .controls { display: none; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; padding: 8px 0 4px; margin-left: 0; order: 99; flex-basis: 100%; }
+    header.controls-open { flex-wrap: wrap; }
+    header.controls-open .controls { display: flex; }
+    .ctrl { width: 100%; justify-content: space-between; }
+    .ctrl input[type=range] { flex: 1; }
+    #visible-count { min-width: 0; flex: 1; text-align: center; }
+
+    .event-sidebar {
+      top: auto; right: 0; bottom: 0; left: 0;
+      width: 100%; max-height: 70vh;
+      transform: translateY(calc(100% + 24px));
+      border-radius: 14px 14px 0 0;
+      padding: 22px 18px 28px;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.18);
+    }
+    .event-sidebar.show { transform: translateY(0); }
+    .event-sidebar::before {
+      content: ''; position: absolute; top: 7px; left: 50%;
+      transform: translateX(-50%);
+      width: 38px; height: 4px;
+      background: var(--fg-muted); opacity: 0.4;
+      border-radius: 2px;
+    }
+    .event-sidebar .es-close { top: 8px; right: 10px; }
+
+    .toll { padding: 8px 12px; min-width: 0; font-size: 11px; top: 8px; right: 8px; max-width: 46%; }
+    .toll .num { font-size: 19px; }
+    .toll .label { font-size: 9px; }
+    .toll .since, .toll .max { font-size: 9px; }
+
+    .legend { font-size: 10px; padding: 6px 8px; bottom: auto; top: 8px; left: 8px; max-width: 46%; }
+    .legend .swatch { width: 70px; height: 7px; }
+    .legend b { font-size: 10px; }
+
+    .ts-event { width: 16px; height: 16px; border-width: 1.5px; }
+    .ts-event[data-row="0"] { top: 0; }
+    .ts-event[data-row="1"] { top: 16px; }
+    .ts-events { height: 32px; }
+    .ts-row .ts-label { min-width: 80px; font-size: 11px; }
+    .ts-btn { padding: 8px 12px; font-size: 14px; min-width: 44px; min-height: 36px; }
+    .ts-speed { padding: 6px 8px; min-height: 32px; }
+
+    #scrubber { padding: 6px 10px 10px; }
+    .source { display: none; }
+    .ts-year-minor { display: none; }
+    .ts-row-speed { font-size: 12px; }
+  }
 </style>
 </head>
 <body>
 <div id="app">
-  <header>
+  <header id="header">
     <div>
       <h1>USGS Earthquakes</h1>
       <div class="sub">297,707 events globally &middot; M4.5+ &middot; 1960-present</div>
     </div>
+    <button class="menu-btn" id="menu-btn" aria-label="toggle controls" aria-expanded="false">&#9776;</button>
     <div class="controls">
       <div class="ctrl">
         <span>mode</span>
         <div class="pill-group" id="mode-pills">
           <button class="pill active" data-mode="replay">replay</button>
-          <button class="pill" data-mode="heatmap">heatmap</button>
           <button class="pill" data-mode="live">live (last hour)</button>
         </div>
       </div>
@@ -4826,6 +4881,16 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
   const tt = GIS.tooltip.create();
   const link = GIS.permalink.init(['mode', 'mag']);
 
+  // Mobile menu toggle
+  const headerEl = document.getElementById('header');
+  const menuBtn = document.getElementById('menu-btn');
+  if (menuBtn) {
+    menuBtn.addEventListener('click', () => {
+      const open = headerEl.classList.toggle('controls-open');
+      menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
   const MAJOR_QUAKES = [{"t":-303281260,"label":"Valdivia, Chile","mag":9.5,"lon":-73.407,"lat":-38.143,"date":"1960-05-22","note":"Largest earthquake ever recorded; ~6,000 dead. Triggered tsunamis across the entire Pacific.","depth_km":25.0,"place":"1960 Great Chilean Earthquake (Valdivia Earthquake)","usgs_id":"official19600522191120_30"},{"t":-196281661,"label":"Kuril Islands","mag":8.5,"lon":149.483,"lat":44.872,"date":"1963-10-13","note":"Pacific Plate subducting beneath Okhotsk Plate; tsunami across the North Pacific.","depth_km":35.0,"place":"1963 Kuril Islands Earthquake","usgs_id":"official19631013051759_30"},{"t":-181858964,"label":"Alaska (Good Friday)","mag":9.2,"lon":-147.339,"lat":60.908,"date":"1964-03-27","note":"Second-largest earthquake ever recorded; ~140 dead. Tsunami damage as far south as California.","depth_km":25.0,"place":"The 1964 Prince William Sound, Alaska Earthquake","usgs_id":"official19640328033616_30"},{"t":-154810658,"label":"Western Aleutians","mag":8.7,"lon":178.715,"lat":51.251,"date":"1965-02-04","note":"Rat Islands earthquake; ruptured ~600 km of the Aleutian subduction zone.","depth_km":30.3,"place":"1965 Western Aleutian Islands (Hawadax/Rat Islands) Earthquake","usgs_id":"official19650204050122_30"},{"t":207344634,"label":"Tangshan, China","mag":7.5,"lon":117.978,"lat":39.57,"date":"1976-07-28","note":"~250,000 dead \u2014 deadliest earthquake of the 20th century. Struck a sleeping industrial city at 03:42 local time.","depth_km":23.0,"place":"17 km NE of Penguanzhuang, China","usgs_id":"usp0000hjg"},{"t":495983927,"label":"Mexico City","mag":8.0,"lon":-102.533,"lat":18.19,"date":"1985-09-19","note":"~10,000 dead; reshaped urban seismic codes worldwide. Lake-bed sediments amplified shaking 400 km from the epicentre.","depth_km":27.9,"place":"1985 Michoacan, Mexico Earthquake","usgs_id":"usp0002jwe"},{"t":790289272,"label":"Kobe, Japan","mag":6.9,"lon":135.018,"lat":34.583,"date":"1995-01-17","note":"Great Hanshin earthquake; ~6,400 dead. Caught Japan's earthquake-preparedness reputation off guard.","depth_km":21.9,"place":"8 km S of Akashi, Japan","usgs_id":"usp0006rew"},{"t":1104022793,"label":"Sumatra-Andaman","mag":9.1,"lon":95.982,"lat":3.295,"date":"2004-12-26","note":"Boxing Day tsunami; ~230,000 dead across 14 countries. Ruptured ~1,300 km of fault \u2014 longest rupture ever recorded.","depth_km":30.0,"place":"2004 Sumatra - Andaman Islands Earthquake","usgs_id":"official20041226005853450_30"},{"t":1112026236,"label":"Nias, Indonesia","mag":8.6,"lon":97.108,"lat":2.085,"date":"2005-03-28","note":"Aftershock of the 2004 Sumatra-Andaman event, three months later. ~1,000 dead.","depth_km":30.0,"place":"78 km WSW of Singkil, Indonesia","usgs_id":"official20050328160936530_30"},{"t":1210573741,"label":"Sichuan, China","mag":7.9,"lon":103.322,"lat":31.002,"date":"2008-05-12","note":"Wenchuan earthquake; ~87,000 dead. Triggered massive landslides in mountainous terrain.","depth_km":19.0,"place":"58 km W of Tianpeng, China","usgs_id":"usp000g650"},{"t":1263333250,"label":"Haiti","mag":7.0,"lon":-72.571,"lat":18.443,"date":"2010-01-12","note":"~100,000\u2013300,000 dead near Port-au-Prince. A modest-magnitude event with catastrophic impact due to weak construction.","depth_km":13.0,"place":"10 km SE of L\u00e9og\u00e2ne, Haiti","usgs_id":"usp000h60h"},{"t":1267252511,"label":"Maule, Chile","mag":8.8,"lon":-72.898,"lat":-36.122,"date":"2010-02-27","note":"~525 dead; tsunami across the Pacific. Released ~500\u00d7 the energy of the Haiti quake six weeks earlier.","depth_km":22.9,"place":"2010 Maule, Chile Earthquake","usgs_id":"official20100227063411530_30"},{"t":1299822444,"label":"Tohoku, Japan","mag":9.1,"lon":142.373,"lat":38.297,"date":"2011-03-11","note":"~20,000 dead from the tsunami. Triggered the Fukushima Daiichi nuclear disaster. Coastline displaced eastward by metres.","depth_km":29.0,"place":"2011 Great Tohoku Earthquake, Japan","usgs_id":"official20110311054624120_30"},{"t":1334133576,"label":"Wharton Basin","mag":8.6,"lon":93.063,"lat":2.327,"date":"2012-04-11","note":"Largest strike-slip earthquake ever recorded \u2014 ruptured oceanic plate, not a subduction zone. Reshaped seismologists' models.","depth_km":20.0,"place":"2012 Wharton Basin Earthquake","usgs_id":"official20120411083836720_20"},{"t":1429942345,"label":"Nepal (Gorkha)","mag":7.8,"lon":84.7314,"lat":28.2305,"date":"2015-04-25","note":"~9,000 dead; severe damage in Kathmandu. Triggered avalanches on Everest base camp.","depth_km":8.22,"place":"67 km NNE of Bharatpur, Nepal","usgs_id":"us20002926"},{"t":1675646314,"label":"Turkey-Syria","mag":7.8,"lon":37.0143,"lat":37.2256,"date":"2023-02-06","note":"~60,000 dead in southeast T\u00fcrkiye and northwest Syria. Two M7.5+ ruptures on the East Anatolian Fault within nine hours.","depth_km":10.0,"place":"Pazarcik earthquake, Kahramanmaras earthquake sequence","usgs_id":"us6000jllz"},{"t":1753831552,"label":"Kamchatka, Russia","mag":8.8,"lon":160.2395,"lat":52.4948,"date":"2025-07-29","note":"Largest earthquake of the 2020s so far; tsunami warnings across the Pacific. Aleutian-arc geometry, similar to 1952 Kamchatka M9.0.","depth_km":35.0,"place":"2025 Kamchatka Peninsula, Russia Earthquake","usgs_id":"us6000qw60"}];
 
   const resp = await fetch('quakes.json');
@@ -4837,7 +4902,7 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
   const T_MAX = 1777608196561 / 1000;
 
   const initial = link.read();
-  const validModes = new Set(['replay', 'heatmap', 'live']);
+  const validModes = new Set(['replay', 'live']);
   let mode = validModes.has(initial.mode) ? initial.mode : 'replay';
   let minMag = initial.mag ? Math.max(4.5, Math.min(9, parseFloat(initial.mag))) : 5.0;
   let currentT = T_MAX;
@@ -4989,6 +5054,11 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
           const dt = new Date(object.t).toISOString().replace('T', ' ').slice(0, 16);
           tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &middot; ${object.place}<br>${dt} UTC &middot; depth ${object.d.toFixed(0)} km`);
         },
+        onClick: ({ object, x, y }) => {
+          if (!object) return;
+          const dt = new Date(object.t).toISOString().replace('T', ' ').slice(0, 16);
+          tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &middot; ${object.place}<br>${dt} UTC &middot; depth ${object.d.toFixed(0)} km`);
+        },
         updateTriggers: { getRadius: [pulseTick], getFillColor: [pulseTick] },
       })];
       const hl = highlightLayer();
@@ -4997,23 +5067,6 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
     }
 
     const filtered = all.filter(q => q.m >= minMag);
-
-    if (mode === 'heatmap') {
-      document.getElementById('visible-count').textContent =
-        `${filtered.length.toLocaleString()} total`;
-      const layers = [new deck.HeatmapLayer({
-        id: 'quakes-heat',
-        data: filtered,
-        getPosition: q => [q.lon, q.lat],
-        getWeight: q => q.m,
-        radiusPixels: 35,
-        intensity: 1.5,
-        threshold: 0.02,
-      })];
-      const hl = highlightLayer();
-      if (hl) layers.push(hl);
-      return layers;
-    }
 
     const winStart = currentT - REPLAY_WINDOW_SEC;
     const visible = filtered.filter(q => {
@@ -5040,6 +5093,11 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
       pickable: true,
       onHover: ({ object, x, y }) => {
         if (!object) return tt.hide();
+        const dt = new Date(object.t).toISOString().slice(0, 10);
+        tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &nbsp; ${object.place || ''}<br>${dt} &middot; depth ${object.d ?? '?'} km`);
+      },
+      onClick: ({ object, x, y }) => {
+        if (!object) return;
         const dt = new Date(object.t).toISOString().slice(0, 10);
         tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &nbsp; ${object.place || ''}<br>${dt} &middot; depth ${object.d ?? '?'} km`);
       },
@@ -5190,17 +5248,14 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
   function buildLegend() {
     const el = document.getElementById('legend');
     const plasmaGrad = 'linear-gradient(90deg,#0d0887,#7e03a7,#cc4778,#f89540,#f0f921)';
-    if (mode === 'heatmap') {
-      el.innerHTML = `<b>Heatmap</b> &middot; seismic energy density (M^1.5 weighted)<br>
-        <div class="row"><span class="swatch-end">low</span><div class="swatch" style="background:${plasmaGrad}"></div><span class="swatch-end">high</span></div>`;
-    } else if (mode === 'live') {
+    if (mode === 'live') {
       el.innerHTML = `<b>Live</b> &middot; M2.5+ in the last hour, refreshed every 60s<br>
         <div class="row"><span class="swatch-end">M2.5</span><div class="swatch" style="background:${plasmaGrad}"></div><span class="swatch-end">M9</span></div>
         <div class="row" style="margin-top:6px;color:var(--fg-muted);font-size:10px;">markers pulse; outline = white</div>`;
     } else {
       el.innerHTML = `<b>Replay</b> &middot; trailing 6-month window<br>
         <div class="row"><span class="swatch-end">M4.5</span><div class="swatch" style="background:${plasmaGrad}"></div><span class="swatch-end">M9</span></div>
-        <div class="row" style="margin-top:6px;color:var(--fg-muted);font-size:10px;">size &prop; 10^(0.45&middot;M) &middot; click dots on the timeline for major historical events</div>`;
+        <div class="row" style="margin-top:6px;color:var(--fg-muted);font-size:10px;">size &prop; 10^(0.45&middot;M) &middot; tap dots on the timeline for major historical events</div>`;
     }
   }
   buildLegend();
