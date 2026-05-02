@@ -37,8 +37,15 @@
   .ts-btn { background: var(--bg-elev); border: 0; color: var(--fg); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
   .ts-btn:hover { background: var(--accent); color: #fff; }
   .ts-track { flex: 1; position: relative; }
-  .ts-playhead { position: absolute; top: 0; height: 26px; width: 2px; background: var(--accent); transform: translateX(-50%); pointer-events: none; z-index: 4; opacity: 0.85; box-shadow: 0 0 4px rgba(0,0,0,0.25); }
-  .ts-range { width: 100%; display: block; }
+  .ts-playhead { position: absolute; top: 0; height: 26px; width: 2px; background: var(--accent); transform: translateX(-50%); pointer-events: none; z-index: 4; opacity: 0.95; box-shadow: 0 0 4px rgba(0,0,0,0.25); }
+  .ts-playhead::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 16px; height: 11px; background: var(--accent); clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+  /* Hide the native range thumb — playhead is the visible indicator. The native input still handles all interaction (click/drag/keyboard/touch). */
+  .ts-range { width: 100%; display: block; appearance: none; -webkit-appearance: none; background: transparent; height: 18px; cursor: grab; outline: none; margin: 0; }
+  .ts-range:active { cursor: grabbing; }
+  .ts-range::-webkit-slider-runnable-track { height: 3px; background: var(--bg-elev); border-radius: 2px; }
+  .ts-range::-moz-range-track { height: 3px; background: var(--bg-elev); border-radius: 2px; border: 0; }
+  .ts-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: transparent; border: 0; margin-top: -8px; cursor: grab; }
+  .ts-range::-moz-range-thumb { width: 18px; height: 18px; background: transparent; border: 0; cursor: grab; }
   .ts-events { position: relative; height: 26px; margin: 0; }
   .ts-event { position: absolute; transform: translateX(-50%); width: 10px; height: 10px; padding: 0; border-radius: 50%; background: var(--accent); border: 1px solid rgba(0,0,0,0.75); cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform 0.12s ease, border-color 0.12s ease; }
   .ts-event[data-row="0"] { top: 2px; }
