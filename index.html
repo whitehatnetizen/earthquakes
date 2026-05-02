@@ -50,7 +50,8 @@
   .ts-years { position: relative; height: 18px; margin-top: 2px; }
   .ts-year { position: absolute; transform: translateX(-50%); top: 0; font-size: 10px; color: var(--fg-muted); font-variant-numeric: tabular-nums; line-height: 1; padding-top: 5px; }
   .ts-year::before { content: ''; position: absolute; top: 0; left: 50%; width: 1px; height: 4px; background: var(--fg-muted); opacity: 0.55; transform: translateX(-50%); }
-  .ts-year-minor { color: var(--fg-muted); }
+  .ts-year-decade { font-weight: 600; opacity: 0.95; }
+  .ts-year-minor { opacity: 0.55; }
   .ts-year-minor::before { height: 2px; opacity: 0.3; }
   .ts-label { font-variant-numeric: tabular-nums; min-width: 110px; text-align: right; }
   .ts-speed { background: var(--bg-elev); border: 0; color: var(--fg); padding: 3px 6px; border-radius: 4px; font-size: 11px; }
@@ -4645,7 +4646,7 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
         const isDecade = (year % 10 === 0);
         tick.className = isDecade ? 'ts-year ts-year-decade' : 'ts-year ts-year-minor';
         tick.style.left = pct + '%';
-        tick.textContent = isDecade ? String(year) : '';
+        tick.textContent = String(year);
         yearsEl.appendChild(tick);
       }
     } else if (yearsEl) {
