@@ -4991,7 +4991,7 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
   let minMag = initial.mag ? Math.max(4.5, Math.min(9, parseFloat(initial.mag))) : 5.0;
   let currentT = T_MAX;
   const REPLAY_WINDOW_SEC = 60 * 60 * 24 * 30 * 6;
-  let showDeaths = (localStorage.getItem('gis-quakes-deaths') === 'on');
+  let showDeaths = false;       // always default off; in-session toggle only
 
   let highlight = null;
   let highlightPulse = 0;
@@ -5360,7 +5360,6 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
     p.addEventListener('click', () => {
       document.querySelectorAll('#deaths-pills .pill').forEach(x => x.classList.toggle('active', x === p));
       showDeaths = (p.dataset.deaths === 'on');
-      localStorage.setItem('gis-quakes-deaths', showDeaths ? 'on' : 'off');
       updateToll();
     });
   });
