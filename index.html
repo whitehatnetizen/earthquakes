@@ -62,6 +62,8 @@
   .toll .since { font-size: 10px; color: var(--fg-muted); opacity: 0.75; margin-top: 2px; font-variant-numeric: tabular-nums; }
   .toll .max { font-size: 10px; color: var(--fg-muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
   .toll .max strong { color: #c63a30; font-weight: 600; }
+  .toll .deaths { font-size: 11px; color: #c63a30; margin-top: 6px; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .toll .deaths:empty { display: none; }
   .event-sidebar { position: absolute; top: 12px; right: 12px; bottom: 12px; width: 360px; background: var(--bg-card); padding: 18px 20px; border-radius: 8px; box-shadow: var(--panel-shadow); font-size: 13px; color: var(--fg); z-index: 8; transform: translateX(calc(100% + 24px)); transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.25, 1); display: flex; flex-direction: column; }
   .event-sidebar.show { transform: translateX(0); }
   .event-sidebar .es-close { position: absolute; top: 10px; right: 12px; background: transparent; border: 0; color: var(--fg-muted); cursor: pointer; font-size: 20px; line-height: 1; padding: 4px 8px; border-radius: 4px; }
@@ -88,6 +90,16 @@
   .source a:hover { text-decoration: underline; }
   .maplibregl-control-container { display: none; }
   .menu-btn { display: none; background: var(--bg-elev); border: 0; color: var(--fg); padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 16px; line-height: 1; margin-left: auto; }
+  .info-btn { background: transparent; border: 0; color: var(--fg-muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 0 0 6px; vertical-align: middle; transition: color 0.12s ease; }
+  .info-btn:hover { color: var(--accent); }
+  .info-panel { position: absolute; top: 56px; left: 16px; max-width: 420px; background: var(--bg-card); padding: 16px 20px 18px; border-radius: 8px; box-shadow: var(--panel-shadow); z-index: 30; font-size: 12px; line-height: 1.5; color: var(--fg); }
+  .info-panel[hidden] { display: none; }
+  .info-panel h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+  .info-panel p { margin: 6px 0; }
+  .info-panel a { color: var(--accent); text-decoration: none; }
+  .info-panel a:hover { text-decoration: underline; }
+  .info-panel .ip-close { position: absolute; top: 6px; right: 8px; background: transparent; border: 0; color: var(--fg-muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 4px; }
+  .info-panel .ip-close:hover { background: var(--bg-elev); color: var(--fg); }
 
   @media (max-width: 768px), (max-width: 1100px) and (pointer: coarse) {
     body { font-size: 13px; }
@@ -144,6 +156,7 @@
     .source { display: none; }
     .ts-year-minor { display: none; }
     .ts-row-speed { font-size: 12px; }
+    .info-panel { top: 50px; left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); max-width: none; max-height: 70vh; overflow-y: auto; }
   }
 </style>
 </head>
@@ -151,8 +164,8 @@
 <div id="app">
   <header id="header">
     <div>
-      <h1>USGS Earthquakes</h1>
-      <div class="sub">297,707 events globally &middot; M4.5+ &middot; 1960-present</div>
+      <h1>USGS Earthquakes <button class="info-btn" id="info-btn" aria-label="data sources" title="data sources">&#9432;</button></h1>
+      <div class="sub">297,707 events globally &middot; M4.5+ &middot; 1960-present &middot; augmented by NOAA fatality data</div>
     </div>
     <button class="menu-btn" id="menu-btn" aria-label="toggle controls" aria-expanded="false">&#9776;</button>
     <div class="controls">
@@ -176,6 +189,13 @@
         <span class="stat-pill" id="visible-count">0 visible</span>
       </div>
       <div class="ctrl">
+        <span>death counter</span>
+        <div class="pill-group" id="deaths-pills">
+          <button class="pill active" data-deaths="off">off</button>
+          <button class="pill" data-deaths="on">on</button>
+        </div>
+      </div>
+      <div class="ctrl">
         <span>theme</span>
         <div class="pill-group">
           <button class="pill theme-pill" data-theme="light">light</button>
@@ -186,6 +206,15 @@
   </header>
   <div id="map">
     <div class="legend" id="legend"></div>
+    <aside class="info-panel" id="info-panel" hidden>
+      <button class="ip-close" id="ip-close" aria-label="dismiss">&times;</button>
+      <h3>Data sources</h3>
+      <p><b>Earthquake catalog:</b> <a href="https://earthquake.usgs.gov/fdsnws/event/1/" target="_blank" rel="noopener">USGS ANSS ComCat</a> via FDSN. ~300,000 events at M4.5+ globally since 1960. Live mode polls the USGS real-time M2.5+ feed.</p>
+      <p><b>Fatality, injury, damage:</b> <a href="https://www.ngdc.noaa.gov/hazel/view/hazards/earthquake/search" target="_blank" rel="noopener">NOAA NCEI Significant Earthquake Database</a>. ~1,580 events have casualty data attached. Death counts include tsunami fatalities (flagged in tooltips and the major-event sidebar where applicable).</p>
+      <p><b>Major events on the timeline:</b> hand-curated mix of M8.5+ and high-impact earthquakes; click any dot for details.</p>
+      <p><b>Basemap:</b> <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>.</p>
+      <p><b>Source:</b> <a href="https://github.com/whitehatnetizen/earthquakes" target="_blank" rel="noopener">github.com/whitehatnetizen/earthquakes</a></p>
+    </aside>
     <aside class="event-sidebar" id="event-sidebar">
       <button class="es-close" id="es-close" aria-label="dismiss">&times;</button>
       <div class="es-title" id="es-title"></div>
@@ -199,7 +228,7 @@
       <div class="num" id="toll-num">0</div>
       <div class="label" id="toll-label">cumulative quakes</div>
       <div class="since" id="toll-since"></div>
-      <div class="max" id="toll-max"></div>
+      <div class="deaths" id="toll-deaths"></div>
     </div>
   </div>
   <div id="scrubber"></div>
@@ -4902,6 +4931,23 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
     });
   }
 
+  // Info panel toggle
+  const infoBtn = document.getElementById('info-btn');
+  const infoPanel = document.getElementById('info-panel');
+  const ipClose = document.getElementById('ip-close');
+  if (infoBtn && infoPanel) {
+    infoBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      infoPanel.hidden = !infoPanel.hidden;
+    });
+    ipClose.addEventListener('click', () => { infoPanel.hidden = true; });
+    document.addEventListener('click', e => {
+      if (infoPanel.hidden) return;
+      if (infoPanel.contains(e.target) || e.target === infoBtn) return;
+      infoPanel.hidden = true;
+    });
+  }
+
   const MAJOR_QUAKES = [{"t":-303281260,"label":"Valdivia, Chile","mag":9.5,"lon":-73.407,"lat":-38.143,"date":"1960-05-22","note":"Largest earthquake ever recorded; ~6,000 dead. Triggered tsunamis across the entire Pacific.","depth_km":25.0,"place":"1960 Great Chilean Earthquake (Valdivia Earthquake)","usgs_id":"official19600522191120_30","usgs_time_ms":-303281320000},{"t":-196281661,"label":"Kuril Islands","mag":8.5,"lon":149.483,"lat":44.872,"date":"1963-10-13","note":"Pacific Plate subducting beneath Okhotsk Plate; tsunami across the North Pacific.","depth_km":35.0,"place":"1963 Kuril Islands Earthquake","usgs_id":"official19631013051759_30","usgs_time_ms":-196281721000},{"t":-181858964,"label":"Alaska (Good Friday)","mag":9.2,"lon":-147.339,"lat":60.908,"date":"1964-03-27","note":"Second-largest earthquake ever recorded; ~140 dead. Tsunami damage as far south as California.","depth_km":25.0,"place":"The 1964 Prince William Sound, Alaska Earthquake","usgs_id":"official19640328033616_30","usgs_time_ms":-181859024000},{"t":-154810658,"label":"Western Aleutians","mag":8.7,"lon":178.715,"lat":51.251,"date":"1965-02-04","note":"Rat Islands earthquake; ruptured ~600 km of the Aleutian subduction zone.","depth_km":30.3,"place":"1965 Western Aleutian Islands (Hawadax/Rat Islands) Earthquake","usgs_id":"official19650204050122_30","usgs_time_ms":-154810718000},{"t":207344634,"label":"Tangshan, China","mag":7.5,"lon":117.978,"lat":39.57,"date":"1976-07-28","note":"~250,000 dead \u2014 deadliest earthquake of the 20th century. Struck a sleeping industrial city at 03:42 local time.","depth_km":23.0,"place":"17 km NE of Penguanzhuang, China","usgs_id":"usp0000hjg","usgs_time_ms":207344574600},{"t":495983927,"label":"Mexico City","mag":8.0,"lon":-102.533,"lat":18.19,"date":"1985-09-19","note":"~10,000 dead; reshaped urban seismic codes worldwide. Lake-bed sediments amplified shaking 400 km from the epicentre.","depth_km":27.9,"place":"1985 Michoacan, Mexico Earthquake","usgs_id":"usp0002jwe","usgs_time_ms":495983867350},{"t":790289272,"label":"Kobe, Japan","mag":6.9,"lon":135.018,"lat":34.583,"date":"1995-01-17","note":"Great Hanshin earthquake; ~6,400 dead. Caught Japan's earthquake-preparedness reputation off guard.","depth_km":21.9,"place":"8 km S of Akashi, Japan","usgs_id":"usp0006rew","usgs_time_ms":790289212120},{"t":1104022793,"label":"Sumatra-Andaman","mag":9.1,"lon":95.982,"lat":3.295,"date":"2004-12-26","note":"Boxing Day tsunami; ~230,000 dead across 14 countries. Ruptured ~1,300 km of fault \u2014 longest rupture ever recorded.","depth_km":30.0,"place":"2004 Sumatra - Andaman Islands Earthquake","usgs_id":"official20041226005853450_30","usgs_time_ms":1104022733450},{"t":1112026236,"label":"Nias, Indonesia","mag":8.6,"lon":97.108,"lat":2.085,"date":"2005-03-28","note":"Aftershock of the 2004 Sumatra-Andaman event, three months later. ~1,000 dead.","depth_km":30.0,"place":"78 km WSW of Singkil, Indonesia","usgs_id":"official20050328160936530_30","usgs_time_ms":1112026176530},{"t":1210573741,"label":"Sichuan, China","mag":7.9,"lon":103.322,"lat":31.002,"date":"2008-05-12","note":"Wenchuan earthquake; ~87,000 dead. Triggered massive landslides in mountainous terrain.","depth_km":19.0,"place":"58 km W of Tianpeng, China","usgs_id":"usp000g650","usgs_time_ms":1210573681570},{"t":1263333250,"label":"Haiti","mag":7.0,"lon":-72.571,"lat":18.443,"date":"2010-01-12","note":"~100,000\u2013300,000 dead near Port-au-Prince. A modest-magnitude event with catastrophic impact due to weak construction.","depth_km":13.0,"place":"10 km SE of L\u00e9og\u00e2ne, Haiti","usgs_id":"usp000h60h","usgs_time_ms":1263333190060},{"t":1267252511,"label":"Maule, Chile","mag":8.8,"lon":-72.898,"lat":-36.122,"date":"2010-02-27","note":"~525 dead; tsunami across the Pacific. Released ~500\u00d7 the energy of the Haiti quake six weeks earlier.","depth_km":22.9,"place":"2010 Maule, Chile Earthquake","usgs_id":"official20100227063411530_30","usgs_time_ms":1267252451530},{"t":1299822444,"label":"Tohoku, Japan","mag":9.1,"lon":142.373,"lat":38.297,"date":"2011-03-11","note":"~20,000 dead from the tsunami. Triggered the Fukushima Daiichi nuclear disaster. Coastline displaced eastward by metres.","depth_km":29.0,"place":"2011 Great Tohoku Earthquake, Japan","usgs_id":"official20110311054624120_30","usgs_time_ms":1299822384120},{"t":1334133576,"label":"Wharton Basin","mag":8.6,"lon":93.063,"lat":2.327,"date":"2012-04-11","note":"Largest strike-slip earthquake ever recorded \u2014 ruptured oceanic plate, not a subduction zone. Reshaped seismologists' models.","depth_km":20.0,"place":"2012 Wharton Basin Earthquake","usgs_id":"official20120411083836720_20","usgs_time_ms":1334133516720},{"t":1429942345,"label":"Nepal (Gorkha)","mag":7.8,"lon":84.7314,"lat":28.2305,"date":"2015-04-25","note":"~9,000 dead; severe damage in Kathmandu. Triggered avalanches on Everest base camp.","depth_km":8.22,"place":"67 km NNE of Bharatpur, Nepal","usgs_id":"us20002926","usgs_time_ms":1429942285950},{"t":1675646314,"label":"Turkey-Syria","mag":7.8,"lon":37.0143,"lat":37.2256,"date":"2023-02-06","note":"~60,000 dead in southeast T\u00fcrkiye and northwest Syria. Two M7.5+ ruptures on the East Anatolian Fault within nine hours.","depth_km":10.0,"place":"Pazarcik earthquake, Kahramanmaras earthquake sequence","usgs_id":"us6000jllz","usgs_time_ms":1675646254342},{"t":1753831552,"label":"Kamchatka, Russia","mag":8.8,"lon":160.2395,"lat":52.4948,"date":"2025-07-29","note":"Largest earthquake of the 2020s so far; tsunami warnings across the Pacific. Aleutian-arc geometry, similar to 1952 Kamchatka M9.0.","depth_km":35.0,"place":"2025 Kamchatka Peninsula, Russia Earthquake","usgs_id":"us6000qw60","usgs_time_ms":1753831492483}];
 
   const resp = await fetch('quakes.json');
@@ -4939,6 +4985,7 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
   let minMag = initial.mag ? Math.max(4.5, Math.min(9, parseFloat(initial.mag))) : 5.0;
   let currentT = T_MAX;
   const REPLAY_WINDOW_SEC = 60 * 60 * 24 * 30 * 6;
+  let showDeaths = (localStorage.getItem('gis-quakes-deaths') === 'on');
 
   let highlight = null;
   let highlightPulse = 0;
@@ -4947,20 +4994,31 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
   let prefixT = null;
   let prefixCum = null;
   let prefixMaxM = null;
+  let prefixDeaths = null;
   let datasetStart = '';
   function rebuildPrefix() {
     const filtered = all.filter(q => q.m >= minMag);
     prefixT = new Float64Array(filtered.length);
     prefixCum = new Int32Array(filtered.length);
     prefixMaxM = new Float32Array(filtered.length);
+    prefixDeaths = new Float64Array(filtered.length);
     let maxM = 0;
+    let deathsSum = 0;
     for (let i = 0; i < filtered.length; i++) {
       prefixT[i] = filtered[i].t / 1000;
       prefixCum[i] = i + 1;
       if (filtered[i].m > maxM) maxM = filtered[i].m;
       prefixMaxM[i] = maxM;
+      const c = casualties[String(filtered[i].t)];
+      if (c) deathsSum += (c.dt || c.d || 0);
+      prefixDeaths[i] = deathsSum;
     }
     datasetStart = filtered.length ? new Date(filtered[0].t).toISOString().slice(0, 10) : '';
+  }
+  function fmtBig(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e5) return Math.round(n / 1e3) + 'k';
+    return Number(n).toLocaleString();
   }
   function lookupIdx(t) {
     if (!prefixT || !prefixT.length) return -1;
@@ -4975,15 +5033,15 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
   function updateToll() {
     const idx = lookupIdx(currentT);
     const n = idx < 0 ? 0 : prefixCum[idx];
-    const maxM = idx < 0 ? 0 : prefixMaxM[idx];
+    const deaths = idx < 0 ? 0 : prefixDeaths[idx];
     document.getElementById('toll-num').textContent = n.toLocaleString();
     const dt = new Date(currentT * 1000).toISOString().slice(0, 10);
     document.getElementById('toll-since').textContent =
       datasetStart ? `since ${datasetStart} -> ${dt}` : '';
-    document.getElementById('toll-max').innerHTML =
-      maxM > 0 ? `largest so far: <strong>M${maxM.toFixed(1)}</strong>` : '';
     document.getElementById('toll-label').textContent =
       `cumulative M${minMag.toFixed(1)}+ quakes`;
+    document.getElementById('toll-deaths').textContent =
+      (showDeaths && deaths > 0) ? `~${fmtBig(deaths)} dead (NOAA)` : '';
   }
   rebuildPrefix();
 
@@ -5285,6 +5343,17 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
     });
   });
   if (mode === 'live') startLive();
+  // Death-counter toggle
+  document.querySelectorAll('#deaths-pills .pill').forEach(p => {
+    p.classList.toggle('active', (p.dataset.deaths === 'on') === showDeaths);
+    p.addEventListener('click', () => {
+      document.querySelectorAll('#deaths-pills .pill').forEach(x => x.classList.toggle('active', x === p));
+      showDeaths = (p.dataset.deaths === 'on');
+      localStorage.setItem('gis-quakes-deaths', showDeaths ? 'on' : 'off');
+      updateToll();
+    });
+  });
+
   document.getElementById('mag-slider').value = String(minMag);
   document.getElementById('mag-label').textContent = `${minMag.toFixed(1)}+`;
   document.getElementById('mag-slider').addEventListener('input', e => {
