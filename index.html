@@ -62,8 +62,10 @@
   .toll .since { font-size: 10px; color: var(--fg-muted); opacity: 0.75; margin-top: 2px; font-variant-numeric: tabular-nums; }
   .toll .max { font-size: 10px; color: var(--fg-muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
   .toll .max strong { color: #c63a30; font-weight: 600; }
-  .toll .deaths { font-size: 11px; color: #c63a30; margin-top: 6px; font-variant-numeric: tabular-nums; font-weight: 600; }
-  .toll .deaths:empty { display: none; }
+  .toll .deaths-block { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--bg-elev); }
+  .toll .deaths-block[hidden] { display: none; }
+  .toll .deaths-num { font: 600 28px/1 "SF Mono", "Consolas", "Courier New", monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; color: #c63a30; }
+  .toll .deaths-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--fg-muted); margin-top: 4px; }
   .event-sidebar { position: absolute; top: 12px; right: 12px; bottom: 12px; width: 360px; background: var(--bg-card); padding: 18px 20px; border-radius: 8px; box-shadow: var(--panel-shadow); font-size: 13px; color: var(--fg); z-index: 8; transform: translateX(calc(100% + 24px)); transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.25, 1); display: flex; flex-direction: column; }
   .event-sidebar.show { transform: translateX(0); }
   .event-sidebar .es-close { position: absolute; top: 10px; right: 12px; background: transparent; border: 0; color: var(--fg-muted); cursor: pointer; font-size: 20px; line-height: 1; padding: 4px 8px; border-radius: 4px; }
@@ -228,7 +230,10 @@
       <div class="num" id="toll-num">0</div>
       <div class="label" id="toll-label">cumulative quakes</div>
       <div class="since" id="toll-since"></div>
-      <div class="deaths" id="toll-deaths"></div>
+      <div class="deaths-block" id="toll-deaths-block">
+        <div class="deaths-num" id="toll-deaths-num">0</div>
+        <div class="deaths-label">dead (NOAA)</div>
+      </div>
     </div>
   </div>
   <div id="scrubber"></div>
@@ -5040,8 +5045,13 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
       datasetStart ? `since ${datasetStart} -> ${dt}` : '';
     document.getElementById('toll-label').textContent =
       `cumulative M${minMag.toFixed(1)}+ quakes`;
-    document.getElementById('toll-deaths').textContent =
-      (showDeaths && deaths > 0) ? `~${fmtBig(deaths)} dead (NOAA)` : '';
+    const deathsBlock = document.getElementById('toll-deaths-block');
+    if (showDeaths && deaths > 0) {
+      deathsBlock.hidden = false;
+      document.getElementById('toll-deaths-num').textContent = '~' + fmtBig(deaths);
+    } else {
+      deathsBlock.hidden = true;
+    }
   }
   rebuildPrefix();
 
