@@ -37,6 +37,7 @@
   .ts-btn { background: var(--bg-elev); border: 0; color: var(--fg); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
   .ts-btn:hover { background: var(--accent); color: #fff; }
   .ts-track { flex: 1; position: relative; }
+  .ts-playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--accent); transform: translateX(-50%); pointer-events: none; z-index: 4; opacity: 0.85; box-shadow: 0 0 4px rgba(0,0,0,0.25); }
   .ts-range { width: 100%; display: block; }
   .ts-events { position: relative; height: 26px; margin: 0; }
   .ts-event { position: absolute; transform: translateX(-50%); width: 10px; height: 10px; padding: 0; border-radius: 50%; background: var(--accent); border: 1px solid rgba(0,0,0,0.75); cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform 0.12s ease, border-color 0.12s ease; }
@@ -4681,6 +4682,7 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
           <div class="ts-events"></div>
           <input type="range" class="ts-range" min="${min}" max="${max}" step="86400" value="${min}" />
           <div class="ts-years"></div>
+          <div class="ts-playhead" aria-hidden="true"></div>
         </div>
         <span class="ts-label"></span>
       </div>
@@ -4701,6 +4703,7 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
     const rewindBtn = container.querySelector('.ts-rewind');
     const eventsEl = container.querySelector('.ts-events');
     const yearsEl = container.querySelector('.ts-years');
+    const playheadEl = container.querySelector('.ts-playhead');
 
     // Render event markers above the range. Stagger into two rows when adjacent
     // markers are too close to read at typical track widths (~1% threshold).
@@ -4765,6 +4768,9 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
     function updateUI() {
       rangeEl.value = String(current);
       labelEl.textContent = formatLabel(current);
+      // Mathematically-precise playhead, independent of native range-thumb offsets
+      const pct = ((current - min) / (max - min)) * 100;
+      playheadEl.style.left = pct + '%';
     }
     function notify() { onChange(current); }
     function tick(ts) {
