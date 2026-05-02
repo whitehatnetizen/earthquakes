@@ -71,6 +71,8 @@
   .event-sidebar .es-chip { background: var(--bg-elev); padding: 3px 10px; border-radius: 999px; font-size: 11px; color: var(--fg); font-variant-numeric: tabular-nums; }
   .event-sidebar .es-chip.es-mag { background: var(--accent); color: #fff; font-weight: 600; }
   .event-sidebar .es-place { color: var(--fg-muted); font-size: 12px; margin-top: 8px; line-height: 1.4; }
+  .event-sidebar .es-impact { margin-top: 10px; font-size: 13px; line-height: 1.45; }
+  .event-sidebar .es-impact:empty { display: none; }
   .event-sidebar .es-note { margin-top: 14px; line-height: 1.55; font-size: 13px; }
   .event-sidebar .es-link { margin-top: auto; padding-top: 14px; }
   .event-sidebar .es-link a { color: var(--accent); text-decoration: none; font-size: 12px; }
@@ -189,6 +191,7 @@
       <div class="es-title" id="es-title"></div>
       <div class="es-meta-row" id="es-meta-row"></div>
       <div class="es-place" id="es-place"></div>
+      <div class="es-impact" id="es-impact"></div>
       <div class="es-note" id="es-note"></div>
       <div class="es-link" id="es-link"></div>
     </aside>
@@ -4899,12 +4902,33 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
     });
   }
 
-  const MAJOR_QUAKES = [{"t":-303281260,"label":"Valdivia, Chile","mag":9.5,"lon":-73.407,"lat":-38.143,"date":"1960-05-22","note":"Largest earthquake ever recorded; ~6,000 dead. Triggered tsunamis across the entire Pacific.","depth_km":25.0,"place":"1960 Great Chilean Earthquake (Valdivia Earthquake)","usgs_id":"official19600522191120_30"},{"t":-196281661,"label":"Kuril Islands","mag":8.5,"lon":149.483,"lat":44.872,"date":"1963-10-13","note":"Pacific Plate subducting beneath Okhotsk Plate; tsunami across the North Pacific.","depth_km":35.0,"place":"1963 Kuril Islands Earthquake","usgs_id":"official19631013051759_30"},{"t":-181858964,"label":"Alaska (Good Friday)","mag":9.2,"lon":-147.339,"lat":60.908,"date":"1964-03-27","note":"Second-largest earthquake ever recorded; ~140 dead. Tsunami damage as far south as California.","depth_km":25.0,"place":"The 1964 Prince William Sound, Alaska Earthquake","usgs_id":"official19640328033616_30"},{"t":-154810658,"label":"Western Aleutians","mag":8.7,"lon":178.715,"lat":51.251,"date":"1965-02-04","note":"Rat Islands earthquake; ruptured ~600 km of the Aleutian subduction zone.","depth_km":30.3,"place":"1965 Western Aleutian Islands (Hawadax/Rat Islands) Earthquake","usgs_id":"official19650204050122_30"},{"t":207344634,"label":"Tangshan, China","mag":7.5,"lon":117.978,"lat":39.57,"date":"1976-07-28","note":"~250,000 dead \u2014 deadliest earthquake of the 20th century. Struck a sleeping industrial city at 03:42 local time.","depth_km":23.0,"place":"17 km NE of Penguanzhuang, China","usgs_id":"usp0000hjg"},{"t":495983927,"label":"Mexico City","mag":8.0,"lon":-102.533,"lat":18.19,"date":"1985-09-19","note":"~10,000 dead; reshaped urban seismic codes worldwide. Lake-bed sediments amplified shaking 400 km from the epicentre.","depth_km":27.9,"place":"1985 Michoacan, Mexico Earthquake","usgs_id":"usp0002jwe"},{"t":790289272,"label":"Kobe, Japan","mag":6.9,"lon":135.018,"lat":34.583,"date":"1995-01-17","note":"Great Hanshin earthquake; ~6,400 dead. Caught Japan's earthquake-preparedness reputation off guard.","depth_km":21.9,"place":"8 km S of Akashi, Japan","usgs_id":"usp0006rew"},{"t":1104022793,"label":"Sumatra-Andaman","mag":9.1,"lon":95.982,"lat":3.295,"date":"2004-12-26","note":"Boxing Day tsunami; ~230,000 dead across 14 countries. Ruptured ~1,300 km of fault \u2014 longest rupture ever recorded.","depth_km":30.0,"place":"2004 Sumatra - Andaman Islands Earthquake","usgs_id":"official20041226005853450_30"},{"t":1112026236,"label":"Nias, Indonesia","mag":8.6,"lon":97.108,"lat":2.085,"date":"2005-03-28","note":"Aftershock of the 2004 Sumatra-Andaman event, three months later. ~1,000 dead.","depth_km":30.0,"place":"78 km WSW of Singkil, Indonesia","usgs_id":"official20050328160936530_30"},{"t":1210573741,"label":"Sichuan, China","mag":7.9,"lon":103.322,"lat":31.002,"date":"2008-05-12","note":"Wenchuan earthquake; ~87,000 dead. Triggered massive landslides in mountainous terrain.","depth_km":19.0,"place":"58 km W of Tianpeng, China","usgs_id":"usp000g650"},{"t":1263333250,"label":"Haiti","mag":7.0,"lon":-72.571,"lat":18.443,"date":"2010-01-12","note":"~100,000\u2013300,000 dead near Port-au-Prince. A modest-magnitude event with catastrophic impact due to weak construction.","depth_km":13.0,"place":"10 km SE of L\u00e9og\u00e2ne, Haiti","usgs_id":"usp000h60h"},{"t":1267252511,"label":"Maule, Chile","mag":8.8,"lon":-72.898,"lat":-36.122,"date":"2010-02-27","note":"~525 dead; tsunami across the Pacific. Released ~500\u00d7 the energy of the Haiti quake six weeks earlier.","depth_km":22.9,"place":"2010 Maule, Chile Earthquake","usgs_id":"official20100227063411530_30"},{"t":1299822444,"label":"Tohoku, Japan","mag":9.1,"lon":142.373,"lat":38.297,"date":"2011-03-11","note":"~20,000 dead from the tsunami. Triggered the Fukushima Daiichi nuclear disaster. Coastline displaced eastward by metres.","depth_km":29.0,"place":"2011 Great Tohoku Earthquake, Japan","usgs_id":"official20110311054624120_30"},{"t":1334133576,"label":"Wharton Basin","mag":8.6,"lon":93.063,"lat":2.327,"date":"2012-04-11","note":"Largest strike-slip earthquake ever recorded \u2014 ruptured oceanic plate, not a subduction zone. Reshaped seismologists' models.","depth_km":20.0,"place":"2012 Wharton Basin Earthquake","usgs_id":"official20120411083836720_20"},{"t":1429942345,"label":"Nepal (Gorkha)","mag":7.8,"lon":84.7314,"lat":28.2305,"date":"2015-04-25","note":"~9,000 dead; severe damage in Kathmandu. Triggered avalanches on Everest base camp.","depth_km":8.22,"place":"67 km NNE of Bharatpur, Nepal","usgs_id":"us20002926"},{"t":1675646314,"label":"Turkey-Syria","mag":7.8,"lon":37.0143,"lat":37.2256,"date":"2023-02-06","note":"~60,000 dead in southeast T\u00fcrkiye and northwest Syria. Two M7.5+ ruptures on the East Anatolian Fault within nine hours.","depth_km":10.0,"place":"Pazarcik earthquake, Kahramanmaras earthquake sequence","usgs_id":"us6000jllz"},{"t":1753831552,"label":"Kamchatka, Russia","mag":8.8,"lon":160.2395,"lat":52.4948,"date":"2025-07-29","note":"Largest earthquake of the 2020s so far; tsunami warnings across the Pacific. Aleutian-arc geometry, similar to 1952 Kamchatka M9.0.","depth_km":35.0,"place":"2025 Kamchatka Peninsula, Russia Earthquake","usgs_id":"us6000qw60"}];
+  const MAJOR_QUAKES = [{"t":-303281260,"label":"Valdivia, Chile","mag":9.5,"lon":-73.407,"lat":-38.143,"date":"1960-05-22","note":"Largest earthquake ever recorded; ~6,000 dead. Triggered tsunamis across the entire Pacific.","depth_km":25.0,"place":"1960 Great Chilean Earthquake (Valdivia Earthquake)","usgs_id":"official19600522191120_30","usgs_time_ms":-303281320000},{"t":-196281661,"label":"Kuril Islands","mag":8.5,"lon":149.483,"lat":44.872,"date":"1963-10-13","note":"Pacific Plate subducting beneath Okhotsk Plate; tsunami across the North Pacific.","depth_km":35.0,"place":"1963 Kuril Islands Earthquake","usgs_id":"official19631013051759_30","usgs_time_ms":-196281721000},{"t":-181858964,"label":"Alaska (Good Friday)","mag":9.2,"lon":-147.339,"lat":60.908,"date":"1964-03-27","note":"Second-largest earthquake ever recorded; ~140 dead. Tsunami damage as far south as California.","depth_km":25.0,"place":"The 1964 Prince William Sound, Alaska Earthquake","usgs_id":"official19640328033616_30","usgs_time_ms":-181859024000},{"t":-154810658,"label":"Western Aleutians","mag":8.7,"lon":178.715,"lat":51.251,"date":"1965-02-04","note":"Rat Islands earthquake; ruptured ~600 km of the Aleutian subduction zone.","depth_km":30.3,"place":"1965 Western Aleutian Islands (Hawadax/Rat Islands) Earthquake","usgs_id":"official19650204050122_30","usgs_time_ms":-154810718000},{"t":207344634,"label":"Tangshan, China","mag":7.5,"lon":117.978,"lat":39.57,"date":"1976-07-28","note":"~250,000 dead \u2014 deadliest earthquake of the 20th century. Struck a sleeping industrial city at 03:42 local time.","depth_km":23.0,"place":"17 km NE of Penguanzhuang, China","usgs_id":"usp0000hjg","usgs_time_ms":207344574600},{"t":495983927,"label":"Mexico City","mag":8.0,"lon":-102.533,"lat":18.19,"date":"1985-09-19","note":"~10,000 dead; reshaped urban seismic codes worldwide. Lake-bed sediments amplified shaking 400 km from the epicentre.","depth_km":27.9,"place":"1985 Michoacan, Mexico Earthquake","usgs_id":"usp0002jwe","usgs_time_ms":495983867350},{"t":790289272,"label":"Kobe, Japan","mag":6.9,"lon":135.018,"lat":34.583,"date":"1995-01-17","note":"Great Hanshin earthquake; ~6,400 dead. Caught Japan's earthquake-preparedness reputation off guard.","depth_km":21.9,"place":"8 km S of Akashi, Japan","usgs_id":"usp0006rew","usgs_time_ms":790289212120},{"t":1104022793,"label":"Sumatra-Andaman","mag":9.1,"lon":95.982,"lat":3.295,"date":"2004-12-26","note":"Boxing Day tsunami; ~230,000 dead across 14 countries. Ruptured ~1,300 km of fault \u2014 longest rupture ever recorded.","depth_km":30.0,"place":"2004 Sumatra - Andaman Islands Earthquake","usgs_id":"official20041226005853450_30","usgs_time_ms":1104022733450},{"t":1112026236,"label":"Nias, Indonesia","mag":8.6,"lon":97.108,"lat":2.085,"date":"2005-03-28","note":"Aftershock of the 2004 Sumatra-Andaman event, three months later. ~1,000 dead.","depth_km":30.0,"place":"78 km WSW of Singkil, Indonesia","usgs_id":"official20050328160936530_30","usgs_time_ms":1112026176530},{"t":1210573741,"label":"Sichuan, China","mag":7.9,"lon":103.322,"lat":31.002,"date":"2008-05-12","note":"Wenchuan earthquake; ~87,000 dead. Triggered massive landslides in mountainous terrain.","depth_km":19.0,"place":"58 km W of Tianpeng, China","usgs_id":"usp000g650","usgs_time_ms":1210573681570},{"t":1263333250,"label":"Haiti","mag":7.0,"lon":-72.571,"lat":18.443,"date":"2010-01-12","note":"~100,000\u2013300,000 dead near Port-au-Prince. A modest-magnitude event with catastrophic impact due to weak construction.","depth_km":13.0,"place":"10 km SE of L\u00e9og\u00e2ne, Haiti","usgs_id":"usp000h60h","usgs_time_ms":1263333190060},{"t":1267252511,"label":"Maule, Chile","mag":8.8,"lon":-72.898,"lat":-36.122,"date":"2010-02-27","note":"~525 dead; tsunami across the Pacific. Released ~500\u00d7 the energy of the Haiti quake six weeks earlier.","depth_km":22.9,"place":"2010 Maule, Chile Earthquake","usgs_id":"official20100227063411530_30","usgs_time_ms":1267252451530},{"t":1299822444,"label":"Tohoku, Japan","mag":9.1,"lon":142.373,"lat":38.297,"date":"2011-03-11","note":"~20,000 dead from the tsunami. Triggered the Fukushima Daiichi nuclear disaster. Coastline displaced eastward by metres.","depth_km":29.0,"place":"2011 Great Tohoku Earthquake, Japan","usgs_id":"official20110311054624120_30","usgs_time_ms":1299822384120},{"t":1334133576,"label":"Wharton Basin","mag":8.6,"lon":93.063,"lat":2.327,"date":"2012-04-11","note":"Largest strike-slip earthquake ever recorded \u2014 ruptured oceanic plate, not a subduction zone. Reshaped seismologists' models.","depth_km":20.0,"place":"2012 Wharton Basin Earthquake","usgs_id":"official20120411083836720_20","usgs_time_ms":1334133516720},{"t":1429942345,"label":"Nepal (Gorkha)","mag":7.8,"lon":84.7314,"lat":28.2305,"date":"2015-04-25","note":"~9,000 dead; severe damage in Kathmandu. Triggered avalanches on Everest base camp.","depth_km":8.22,"place":"67 km NNE of Bharatpur, Nepal","usgs_id":"us20002926","usgs_time_ms":1429942285950},{"t":1675646314,"label":"Turkey-Syria","mag":7.8,"lon":37.0143,"lat":37.2256,"date":"2023-02-06","note":"~60,000 dead in southeast T\u00fcrkiye and northwest Syria. Two M7.5+ ruptures on the East Anatolian Fault within nine hours.","depth_km":10.0,"place":"Pazarcik earthquake, Kahramanmaras earthquake sequence","usgs_id":"us6000jllz","usgs_time_ms":1675646254342},{"t":1753831552,"label":"Kamchatka, Russia","mag":8.8,"lon":160.2395,"lat":52.4948,"date":"2025-07-29","note":"Largest earthquake of the 2020s so far; tsunami warnings across the Pacific. Aleutian-arc geometry, similar to 1952 Kamchatka M9.0.","depth_km":35.0,"place":"2025 Kamchatka Peninsula, Russia Earthquake","usgs_id":"us6000qw60","usgs_time_ms":1753831492483}];
 
   const resp = await fetch('quakes.json');
   const payload = await resp.json();
   const all = payload.data.map(([t, lon, lat, d, m, place]) => ({ t, lon, lat, d, m, place }));
-  console.log('loaded', all.length, 'events');
+  const casualties = payload.casualties || {};
+  console.log('loaded', all.length, 'events,', Object.keys(casualties).length, 'with casualty data');
+
+  // Format an integer with thousand separators
+  function fmtN(n) {
+    if (n == null) return '';
+    return Number(n).toLocaleString();
+  }
+  // Render the casualty line for a given event timestamp; returns '' if none.
+  function casualtyLine(t_ms) {
+    const c = casualties[String(t_ms)];
+    if (!c) return '';
+    const parts = [];
+    const dt = c.dt || c.d;
+    if (dt) {
+      const tail = c.t ? ' <span style="color:var(--fg-muted);font-weight:400">(incl. tsunami)</span>' : '';
+      parts.push(`<b style="color:#c63a30">${fmtN(dt)} dead</b>${tail}`);
+    }
+    if (c.i) parts.push(`${fmtN(c.i)} injured`);
+    if (c.m) parts.push(`$${fmtN(c.m)}M damage`);
+    return parts.length ? '<br>' + parts.join(' &middot; ') : '';
+  }
 
   const T_MIN = -315488281280 / 1000;
   const T_MAX = 1777608196561 / 1000;
@@ -5060,12 +5084,12 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
         onHover: ({ object, x, y }) => {
           if (!object) return tt.hide();
           const dt = new Date(object.t).toISOString().replace('T', ' ').slice(0, 16);
-          tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &middot; ${object.place}<br>${dt} UTC &middot; depth ${object.d.toFixed(0)} km`);
+          tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &middot; ${object.place}<br>${dt} UTC &middot; depth ${object.d.toFixed(0)} km${casualtyLine(object.t)}`);
         },
         onClick: ({ object, x, y }) => {
           if (!object) return;
           const dt = new Date(object.t).toISOString().replace('T', ' ').slice(0, 16);
-          tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &middot; ${object.place}<br>${dt} UTC &middot; depth ${object.d.toFixed(0)} km`);
+          tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &middot; ${object.place}<br>${dt} UTC &middot; depth ${object.d.toFixed(0)} km${casualtyLine(object.t)}`);
         },
         updateTriggers: { getRadius: [pulseTick], getFillColor: [pulseTick] },
       })];
@@ -5102,12 +5126,12 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
       onHover: ({ object, x, y }) => {
         if (!object) return tt.hide();
         const dt = new Date(object.t).toISOString().slice(0, 10);
-        tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &nbsp; ${object.place || ''}<br>${dt} &middot; depth ${object.d ?? '?'} km`);
+        tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &nbsp; ${object.place || ''}<br>${dt} &middot; depth ${object.d ?? '?'} km${casualtyLine(object.t)}`);
       },
       onClick: ({ object, x, y }) => {
         if (!object) return;
         const dt = new Date(object.t).toISOString().slice(0, 10);
-        tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &nbsp; ${object.place || ''}<br>${dt} &middot; depth ${object.d ?? '?'} km`);
+        tt.show(x, y, `<b>M${object.m.toFixed(1)}</b> &nbsp; ${object.place || ''}<br>${dt} &middot; depth ${object.d ?? '?'} km${casualtyLine(object.t)}`);
       },
       updateTriggers: { getFillColor: [currentT] },
     })];
@@ -5145,6 +5169,7 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
     if (ev.depth_km != null) chips.push(`<span class="es-chip">depth ${ev.depth_km.toFixed(0)} km</span>`);
     esMetaRow.innerHTML = chips.join('');
     esPlace.textContent = ev.place || '';
+    document.getElementById('es-impact').innerHTML = ev.usgs_time_ms ? casualtyLine(ev.usgs_time_ms).replace(/^<br>/, '') : '';
     esNote.textContent = ev.note || '';
     if (ev.usgs_id) {
       esLink.innerHTML = `<a href="https://earthquake.usgs.gov/earthquakes/eventpage/${encodeURIComponent(ev.usgs_id)}" target="_blank" rel="noopener">View on USGS &rarr;</a>`;
@@ -5181,6 +5206,7 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
     lon: ev.lon, lat: ev.lat,
     mag: ev.mag, date: ev.date, note: ev.note,
     depth_km: ev.depth_km, place: ev.place, usgs_id: ev.usgs_id,
+    usgs_time_ms: ev.usgs_time_ms,
   }));
 
   const scrubberContainer = document.getElementById('scrubber');
