@@ -80,6 +80,7 @@
   .legend .swatch-end { font-size: 10px; color: var(--fg-muted); }
   .stat-pill { background: var(--bg-elev); padding: 4px 10px; border-radius: 4px; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--fg); }
   #visible-count { min-width: 130px; text-align: center; }
+  #goto-date { background: var(--bg-elev); border: 0; color: var(--fg); padding: 4px 8px; border-radius: 4px; font-family: inherit; font-size: 12px; color-scheme: light dark; }
   .source { font-size: 11px; color: var(--fg-muted); }
   .source a { color: var(--accent); text-decoration: none; }
   .source a:hover { text-decoration: underline; }
@@ -164,6 +165,10 @@
         <span>min magnitude</span>
         <input type="range" id="mag-slider" min="4.5" max="9" step="0.1" value="5.0" />
         <span class="stat-pill" id="mag-label">5.0+</span>
+      </div>
+      <div class="ctrl">
+        <span>go to</span>
+        <input type="date" id="goto-date" />
       </div>
       <div class="ctrl">
         <span class="stat-pill" id="visible-count">0 visible</span>
@@ -5218,6 +5223,27 @@ fragColor.g = outTexture.r / max(1.0, outTexture.a);
   scrubberContainer.querySelector('.ts-rewind').addEventListener('click', clearHighlight);
   scrubberContainer.querySelector('.ts-range').addEventListener('mousedown', clearHighlight);
   scrubberContainer.querySelector('.ts-range').addEventListener('touchstart', clearHighlight);
+
+  // Date picker — jump the scrubber to a specific date
+  const gotoDate = document.getElementById('goto-date');
+  if (gotoDate) {
+    const dateMin = new Date(T_MIN * 1000).toISOString().slice(0, 10);
+    const dateMax = new Date(T_MAX * 1000).toISOString().slice(0, 10);
+    gotoDate.min = dateMin;
+    gotoDate.max = dateMax;
+    gotoDate.value = new Date(currentT * 1000).toISOString().slice(0, 10);
+    gotoDate.addEventListener('change', e => {
+      const v = e.target.value;
+      if (!v) return;
+      // Noon UTC of selected date — reduces the chance the trailing 6-month
+      // window skips an event that occurred late on that day.
+      const t = Date.parse(v + 'T12:00:00Z') / 1000;
+      if (isNaN(t)) return;
+      scrubber.pause();
+      scrubber.seek(Math.max(T_MIN, Math.min(T_MAX, t)));
+      clearHighlight();
+    });
+  }
 
   document.querySelectorAll('#mode-pills .pill').forEach(p => {
     p.classList.toggle('active', p.dataset.mode === mode);
